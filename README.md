@@ -4,6 +4,13 @@
 
 A utility class for displaying status updates in the iOS status bar.  Inspired by Mailbox and designed to function similar to SVProgressHUD.
 
+## Screenshots
+
+![Status Update](Screenshots/message.png "Status Update")
+![Processing](Screenshots/spinner.png "Processing...")
+![Task Success](Screenshots/success.png "Task Success")
+![Task Failed](Screenshots/error.png "Task Failed")
+
 ## Usage
 
 - Show a status
