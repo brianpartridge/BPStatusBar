@@ -41,6 +41,7 @@
 @property (nonatomic, strong) UILabel *statusLabel;
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UIActivityIndicatorView *spinner;
+@property (nonatomic, strong) NSTimer *autoDismissalTimer;
 
 @end
 
@@ -156,6 +157,8 @@ static UIStatusBarAnimation _transitionStyle;
 #pragma mark - Show and Dismiss
 
 - (void)showStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
+    [self.autoDismissalTimer invalidate];
+    
     self.imageView.image = nil;
     self.imageView.hidden = YES;
     self.statusLabel.text = status;
@@ -170,6 +173,8 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)showImage:(UIImage *)image status:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
+    [self.autoDismissalTimer invalidate];
+
     self.imageView.image = [image bpsb_tintedImageWithColor:self.foregroundColor];
     self.imageView.hidden = NO;
     self.statusLabel.text = status;
@@ -182,11 +187,7 @@ static UIStatusBarAnimation _transitionStyle;
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
     }
 
-    double delayInSeconds = 1.0;
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        [self dismiss:transitionStyle];
-    });
+    self.autoDismissalTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(dismissFromTimer:) userInfo:nil repeats:NO];
 }
 
 - (void)dismiss:(UIStatusBarAnimation)transitionStyle {
@@ -198,6 +199,10 @@ static UIStatusBarAnimation _transitionStyle;
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         [self removeFromSuperview];
     });
+}
+
+- (void)dismissFromTimer:(NSTimer *)timer {
+    [self dismiss:[[self class]transitionStyle]];
 }
 
 #pragma mark - Subviews
