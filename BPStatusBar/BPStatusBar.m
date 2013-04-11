@@ -131,9 +131,12 @@ static UIStatusBarAnimation _transitionStyle;
 
 - (void)layoutSubviews {
     CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
-    availableBounds.size.width -= ACCESSORY_DIMENSION;
+    availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
 
     CGSize labelSize = [self.statusLabel sizeThatFits:availableBounds.size];
+    if (availableBounds.size.width < labelSize.width) {
+        labelSize = availableBounds.size;
+    }
 
     CGFloat totalContentWidth = ACCESSORY_DIMENSION + HORIZONTAL_PADDING + labelSize.width;
     CGFloat hOffset = floorf((self.bounds.size.width - totalContentWidth) / 2);
@@ -164,12 +167,12 @@ static UIStatusBarAnimation _transitionStyle;
     self.statusLabel.text = status;
     [self.spinner startAnimating];
 
-    if (![[self class] isVisible]) {
+    if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
-        [self setNeedsLayout];
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
     }
+    [self setNeedsLayout];
 }
 
 - (void)showImage:(UIImage *)image status:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
@@ -180,17 +183,20 @@ static UIStatusBarAnimation _transitionStyle;
     self.statusLabel.text = status;
     [self.spinner stopAnimating];
 
-    if (![[self class] isVisible]) {
+    if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
-        [self setNeedsLayout];
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
     }
+    [self setNeedsLayout];
 
     self.autoDismissalTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(dismissFromTimer:) userInfo:nil repeats:NO];
 }
 
 - (void)dismiss:(UIStatusBarAnimation)transitionStyle {
+    if (![UIApplication sharedApplication].statusBarHidden) {
+        return;
+    }
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:transitionStyle];
 
     // TODO: This is a timing hack, it would be nice if we could get notified when the system status bar fully appears, but we can't currently.
@@ -211,7 +217,7 @@ static UIStatusBarAnimation _transitionStyle;
     if (_statusLabel == nil) {
         _statusLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _statusLabel.backgroundColor = [UIColor clearColor];
-        _statusLabel.adjustsFontSizeToFitWidth = YES;
+        _statusLabel.adjustsFontSizeToFitWidth = NO;
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
         _statusLabel.textAlignment = UITextAlignmentCenter;
 #else
