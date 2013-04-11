@@ -36,8 +36,12 @@
     // Dispose of any resources that can be recreated.
 }
 
+- (IBAction)messageTapped:(id)sender {
+    [BPStatusBar showStatus:@"Status Update"];
+}
+
 - (IBAction)indetermianteTapped:(id)sender {
-    [BPStatusBar showWithStatus:@"Processing..."];
+    [BPStatusBar showActivityWithStatus:@"Processing..."];
 }
 
 - (IBAction)dismissTapped:(id)sender {

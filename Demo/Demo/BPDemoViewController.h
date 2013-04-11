@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @interface BPDemoViewController : UIViewController
-
+- (IBAction)messageTapped:(id)sender;
 - (IBAction)indetermianteTapped:(id)sender;
 - (IBAction)dismissTapped:(id)sender;
 - (IBAction)successTapped:(id)sender;

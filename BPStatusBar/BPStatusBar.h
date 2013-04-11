@@ -28,19 +28,14 @@
 + (void)setTransitionStyle:(UIStatusBarAnimation)transitionStyle;
 
 /**
+ * Show a status string.
+ */
++ (void)showStatus:(NSString*)status;
+
+/**
  * Show spinner with status string.
  */
-+ (void)showWithStatus:(NSString*)status;
-
-/**
- * Show determinate progress indicator with status string.
- */
-+ (void)showProgress:(CGFloat)progress status:(NSString*)status;
-
-/**
- * Change the status while already showing.
- */
-+ (void)setStatus:(NSString*)status;
++ (void)showActivityWithStatus:(NSString*)status;
 
 /**
  * Stops the activity indicator, shows a glyph and status, and dismisses 1 second later.

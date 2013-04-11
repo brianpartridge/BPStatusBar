@@ -12,6 +12,12 @@
 #define HORIZONTAL_PADDING 10.0
 #define STATUSBAR_TRANSITION_DURATION 0.3
 
+typedef NS_ENUM(NSInteger, BPStatusBarAccessoryType) {
+    BPStatusBarAccessoryTypeNone,
+    BPStatusBarAccessoryTypeIndeterminate,
+    BPStatusBarAccessoryTypeImage,
+};
+
 #pragma mark - Categories
 
 @implementation UIImage (BPStatusBar)
@@ -42,6 +48,8 @@
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UIActivityIndicatorView *spinner;
 @property (nonatomic, strong) NSTimer *autoDismissalTimer;
+
+@property (nonatomic, assign) BPStatusBarAccessoryType accessoryType;
 
 @end
 
@@ -77,16 +85,12 @@ static UIStatusBarAnimation _transitionStyle;
 
 #pragma mark - Show Methods
 
-+ (void)showWithStatus:(NSString*)status {
++ (void)showStatus:(NSString*)status {
     [[self sharedView] showStatus:status transitionStyle:[self transitionStyle]];
 }
 
-+ (void)showProgress:(CGFloat)progress status:(NSString*)status {
-    [[self sharedView] showStatus:status transitionStyle:[self transitionStyle]];
-}
-
-+ (void)setStatus:(NSString *)status {
-    [[self sharedView] setStatus:status];
++ (void)showActivityWithStatus:(NSString*)status {
+    [[self sharedView] showActivityWithStatus:status transitionStyle:[self transitionStyle]];
 }
 
 #pragma mark - Show Then Dismiss Methods
@@ -130,6 +134,14 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)layoutSubviews {
+    if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
+        self.statusLabel.frame = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
+    } else {
+        [self layoutWithAccessory];
+    }
+}
+
+- (void)layoutWithAccessory {
     CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
     availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
 
@@ -157,15 +169,52 @@ static UIStatusBarAnimation _transitionStyle;
     [self setNeedsLayout];
 }
 
+#pragma mark - Properties
+
+- (void)setAccessoryType:(BPStatusBarAccessoryType)accessoryType {
+    _accessoryType = accessoryType;
+
+    switch (accessoryType) {
+        case BPStatusBarAccessoryTypeNone:
+            self.imageView.image = nil;
+            self.imageView.hidden = YES;
+            [self.spinner stopAnimating];
+            break;
+        case BPStatusBarAccessoryTypeIndeterminate:
+            self.imageView.image = nil;
+            self.imageView.hidden = YES;
+            [self.spinner startAnimating];
+            break;
+        case BPStatusBarAccessoryTypeImage:
+            self.imageView.hidden = NO;
+            [self.spinner stopAnimating];
+            break;
+        default:
+            break;
+    }
+}
+
 #pragma mark - Show and Dismiss
 
 - (void)showStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
     [self.autoDismissalTimer invalidate];
-    
-    self.imageView.image = nil;
-    self.imageView.hidden = YES;
+
+    self.accessoryType = BPStatusBarAccessoryTypeNone;
     self.statusLabel.text = status;
-    [self.spinner startAnimating];
+
+    if (![UIApplication sharedApplication].statusBarHidden) {
+        self.frame = [UIApplication sharedApplication].statusBarFrame;
+        [[UIApplication sharedApplication].keyWindow addSubview:self];
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
+    }
+    [self setNeedsLayout];
+}
+
+- (void)showActivityWithStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
+    [self.autoDismissalTimer invalidate];
+
+    self.accessoryType = BPStatusBarAccessoryTypeIndeterminate;
+    self.statusLabel.text = status;
 
     if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
@@ -178,10 +227,9 @@ static UIStatusBarAnimation _transitionStyle;
 - (void)showImage:(UIImage *)image status:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
     [self.autoDismissalTimer invalidate];
 
+    self.accessoryType = BPStatusBarAccessoryTypeImage;
     self.imageView.image = [image bpsb_tintedImageWithColor:self.foregroundColor];
-    self.imageView.hidden = NO;
     self.statusLabel.text = status;
-    [self.spinner stopAnimating];
 
     if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
