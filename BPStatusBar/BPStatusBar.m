@@ -12,6 +12,30 @@
 #define HORIZONTAL_PADDING 10.0
 #define STATUSBAR_TRANSITION_DURATION 0.3
 
+#pragma mark - Categories
+
+@implementation UIImage (BPStatusBar)
+
+/**
+ * Basic image tinting. From: https://github.com/thoughtbot/ios-sample-blender
+ */
+- (UIImage *)bpsb_tintedImageWithColor:(UIColor *)tintColor {
+    UIGraphicsBeginImageContextWithOptions(self.size, NO, 0.0f);
+    [tintColor setFill];
+    CGRect bounds = CGRectMake(0, 0, self.size.width, self.size.height);
+    UIRectFill(bounds);
+    [self drawInRect:bounds blendMode:kCGBlendModeDestinationIn alpha:1.0f];
+
+    UIImage *tintedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    return tintedImage;
+}
+
+@end
+
+#pragma mark - BPStatusBar
+
 @interface BPStatusBar ()
 
 @property (nonatomic, strong) UILabel *statusLabel;
@@ -146,7 +170,7 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)showImage:(UIImage *)image status:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
-    self.imageView.image = image;
+    self.imageView.image = [image bpsb_tintedImageWithColor:self.foregroundColor];
     self.imageView.hidden = NO;
     self.statusLabel.text = status;
     [self.spinner stopAnimating];
@@ -246,7 +270,7 @@ static UIStatusBarAnimation _transitionStyle;
     }
 #endif
 
-    return [UIColor whiteColor];
+    return [UIColor colorWithWhite:186.0/255.0 alpha:1.0];
 }
 
 - (UIFont *)font {
