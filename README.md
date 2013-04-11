@@ -6,20 +6,25 @@ A utility class for displaying status updates in the iOS status bar.  Inspired b
 
 ## Usage
 
+- Show a status
+
+        [BPStatusBar showStatus:@"Something Happened"];
+        
 - Show a status with a spinner
 
-        [BPStatusBar showWithStatus:@"Working..."];
+        [BPStatusBar showActivityWithStatus:@"Working..."];
 
-- Show a message with an image and dismiss after 1 second
+- Show a message with a success image and dismiss after 1 second
 
         [BPStatusBar showWithSuccess:@"Download Finished!"];
         
 - See the included demo app for more.
 
-## Known Issues
+## Known Limitations
 
-- Rotation support is untested.
-- Timing hacks when restoring the system status bar.
+- Rotation is not supported. Suggestions welcome.
+- Works best with the UIStatusBarStyleBlackOpaque, using UIStatusBarStyleBlackTranslucent may not look right when the system statusbar reappears.
+- No support for a determinate progress indicator.  This is replacing the system statusbar and ideally shouldn't be displayed for extended periods of time.
 
 ## License
 
