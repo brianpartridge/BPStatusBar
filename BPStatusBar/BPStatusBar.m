@@ -58,7 +58,7 @@ typedef NS_ENUM(NSInteger, BPStatusBarAccessoryType) {
 static UIStatusBarAnimation _transitionStyle;
 
 + (void)initialize {
-    _transitionStyle = UIStatusBarAnimationFade;
+    _transitionStyle = UIStatusBarAnimationSlide;
 }
 
 #pragma mark - Class Property
@@ -81,7 +81,8 @@ static UIStatusBarAnimation _transitionStyle;
         UIApplication *app = [UIApplication sharedApplication];
         sharedView.frame = CGRectMake(0, 0, app.statusBarFrame.size.width, app.statusBarFrame.size.height);
     });
-    
+    sharedView.clipsToBounds = YES;
+
     return sharedView;
 }
 
@@ -145,11 +146,12 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)layoutSubviews {
-    if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
-        self.statusLabel.frame = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
-    } else {
-        [self layoutWithAccessory];
-    }
+    NSLog(@"layoutSubviews");
+    float delay = 0;
+    delay = 0.3;
+    [self performSelector:@selector(layoutWithAccessory) withObject:nil afterDelay:delay];
+
+//    [self layoutWithAccessory];
 }
 
 - (void)layoutWithAccessory {
@@ -167,12 +169,38 @@ static UIStatusBarAnimation _transitionStyle;
                                        floorf((self.bounds.size.height - ACCESSORY_DIMENSION) / 2),
                                        ACCESSORY_DIMENSION,
                                        ACCESSORY_DIMENSION);
+    accessoryFrame.origin.y = availableBounds.size.height;
     self.imageView.frame = self.spinner.frame = accessoryFrame;
-    
-    self.statusLabel.frame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
-                                        floorf((self.bounds.size.height - labelSize.height) / 2),
-                                        labelSize.width,
-                                        labelSize.height);
+
+    CGRect statusLabelFrame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
+                                         floorf((self.bounds.size.height - labelSize.height) / 2),
+                                         labelSize.width,
+                                         labelSize.height);
+    statusLabelFrame.origin.y = availableBounds.size.height;
+    if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
+        statusLabelFrame.origin.x -= accessoryFrame.size.width;
+    }
+    self.statusLabel.frame = statusLabelFrame;
+
+    [UIView animateWithDuration:0.3 animations:^{
+        CGRect accessoryFrame = CGRectMake(hOffset,
+                                           floorf((self.bounds.size.height - ACCESSORY_DIMENSION) / 2),
+                                           ACCESSORY_DIMENSION,
+                                           ACCESSORY_DIMENSION);
+        CGRect statusLabelFrame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
+                                             floorf((self.bounds.size.height - labelSize.height) / 2),
+                                             labelSize.width,
+                                             labelSize.height);
+
+        if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
+            statusLabelFrame.origin.x -= accessoryFrame.size.width;
+        }
+        
+        self.imageView.frame = accessoryFrame;
+        self.statusLabel.frame = statusLabelFrame;
+        self.spinner.frame = accessoryFrame;
+    }];
+
 }
 
 - (void)setStatus:(NSString *)status {
@@ -222,6 +250,7 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)showActivityWithStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
+    NSLog(@"showActivityWithStatus");
     self.transform = [self transform];
     [self.autoDismissalTimer invalidate];
     
@@ -262,11 +291,39 @@ static UIStatusBarAnimation _transitionStyle;
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:transitionStyle];
     
     // TODO: This is a timing hack, it would be nice if we could get notified when the system status bar fully appears, but we can't currently.
-    double delayInSeconds = STATUSBAR_TRANSITION_DURATION;
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        [self removeFromSuperview];
-    });
+    CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
+    availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
+
+    CGSize labelSize = [self.statusLabel sizeThatFits:availableBounds.size];
+    if (availableBounds.size.width < labelSize.width) {
+        labelSize = availableBounds.size;
+    }
+    
+    CGFloat totalContentWidth = ACCESSORY_DIMENSION + HORIZONTAL_PADDING + labelSize.width;
+    CGFloat hOffset = floorf((self.bounds.size.width - totalContentWidth) / 2);
+
+    CGRect accessoryFrame = CGRectMake(hOffset,
+                                       floorf((self.bounds.size.height - ACCESSORY_DIMENSION) / 2),
+                                       ACCESSORY_DIMENSION,
+                                       ACCESSORY_DIMENSION);
+    accessoryFrame.origin.y = availableBounds.size.height;
+
+    CGRect statusLabelFrame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
+                                         floorf((self.bounds.size.height - labelSize.height) / 2),
+                                         labelSize.width,
+                                         labelSize.height);
+    if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
+        statusLabelFrame.origin.x -= accessoryFrame.size.width;
+    }
+    statusLabelFrame.origin.y = availableBounds.size.height;
+    
+    [UIView animateWithDuration:0.3 animations:^{
+        self.imageView.frame = accessoryFrame;
+        self.statusLabel.frame = statusLabelFrame;
+        self.spinner.frame = accessoryFrame;
+    } completion:^(BOOL finished){
+//        [self removeFromSuperview];
+    }];
 }
 
 - (void)dismissFromTimer:(NSTimer *)timer {
