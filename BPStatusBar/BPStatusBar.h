@@ -61,6 +61,8 @@
  */
 + (void)dismiss;
 
++ (void)dismissNotice;
+
 /**
  * Indicates whether the BPStatusBar is visible.
  */
