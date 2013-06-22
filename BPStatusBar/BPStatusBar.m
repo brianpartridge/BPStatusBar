@@ -254,7 +254,6 @@ static UIStatusBarAnimation _transitionStyle;
 #pragma mark - Show and Dismiss
 
 - (void)showStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
-    NSLog(@"showStatus");
     [self.autoDismissalTimer invalidate];
     
     self.accessoryType = BPStatusBarAccessoryTypeNone;
@@ -269,7 +268,6 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)showActivityWithStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
-    NSLog(@"showActivityWithStatus");
     self.transform = [self transform];
     [self.autoDismissalTimer invalidate];
     
@@ -285,7 +283,6 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)showImage:(UIImage *)image status:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
-    NSLog(@"showImage");
     self.transform = [self transform];
     [self.autoDismissalTimer invalidate];
     
@@ -300,7 +297,7 @@ static UIStatusBarAnimation _transitionStyle;
     }
     [self setNeedsLayout];
     
-    self.autoDismissalTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(dismissFromTimer:) userInfo:nil repeats:NO];
+    self.autoDismissalTimer = [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(dismissFromTimer:) userInfo:nil repeats:NO];
 }
 
 - (void)dismiss:(UIStatusBarAnimation)transitionStyle {
