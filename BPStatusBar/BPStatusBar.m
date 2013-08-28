@@ -311,24 +311,31 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 -(void)dismissView{
+    NSLog(@"dismissView")
     // TODO: This is a timing hack, it would be nice if we could get notified when the system status bar fully appears, but we can't currently.
     CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
     availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
     
+    // CGRect barViewFrame = self.frame;
     CGRect imageViewFrame = self.imageView.frame;
     CGRect statusLabelFrame = self.statusLabel.frame;
     CGRect spinnerFrame = self.spinner.frame;
 
+    // barViewFrame.origin.y += 20
     imageViewFrame.origin.y += availableBounds.size.height;
     statusLabelFrame.origin.y += availableBounds.size.height;
     spinnerFrame.origin.y += availableBounds.size.height;
 
+    // [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
     [UIView animateWithDuration:0.3 animations:^{
+        // self.frame = barViewFrame
         self.imageView.frame = imageViewFrame;
         self.statusLabel.frame = statusLabelFrame;
         self.spinner.frame = spinnerFrame;
     } completion:^(BOOL finished){
-        //        [self removeFromSuperview];
+        // self.hidden = true;
+        // [self removeFromSuperview];
+        // [self setNeedsLayout];
     }];
 }
 
