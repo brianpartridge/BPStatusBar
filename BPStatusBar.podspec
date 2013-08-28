@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/brianpartridge/BPStatusBar"
   s.license      = { :type => 'MIT', :file => 'LICENSE.txt' }
   s.author       = { "Brian Partridge" => "brianpartridge@gmail.com" }
-  s.source       = { :path => '~/Projects/*Defaults/Misc/Cocoapods/BPStatusBar' }
+  s.source       = { :git => "https://github.com/brianpartridge/BPStatusBar.git", :tag => "0.9.0" }
   s.platform     = :ios, '5.0'
   s.source_files = 'BPStatusBar', 'BPStatusBar/**/*.{h,m}'
   s.resources 	 = 'BPStatusBar/BPStatusBar.bundle'
