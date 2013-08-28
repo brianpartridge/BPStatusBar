@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		72AA3B831774CFA8008A16A9 /* NSTimer+Blocks.m in Sources */ = {isa = PBXBuildFile; fileRef = 72AA3B821774CFA8008A16A9 /* NSTimer+Blocks.m */; };
 		D34233501713D1B3000B2438 /* BPStatusBar.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D342334D1713D1B3000B2438 /* BPStatusBar.bundle */; };
 		D34233511713D1B3000B2438 /* BPStatusBar.m in Sources */ = {isa = PBXBuildFile; fileRef = D342334F1713D1B3000B2438 /* BPStatusBar.m */; };
 		D34233551713D1DE000B2438 /* BPDemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D34233531713D1DE000B2438 /* BPDemoViewController.m */; };
@@ -23,6 +24,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		72AA3B811774CFA8008A16A9 /* NSTimer+Blocks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTimer+Blocks.h"; sourceTree = "<group>"; };
+		72AA3B821774CFA8008A16A9 /* NSTimer+Blocks.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTimer+Blocks.m"; sourceTree = "<group>"; };
 		D342334D1713D1B3000B2438 /* BPStatusBar.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = BPStatusBar.bundle; sourceTree = "<group>"; };
 		D342334E1713D1B3000B2438 /* BPStatusBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BPStatusBar.h; sourceTree = "<group>"; };
 		D342334F1713D1B3000B2438 /* BPStatusBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BPStatusBar.m; sourceTree = "<group>"; };
@@ -61,6 +64,8 @@
 		D342334C1713D1B3000B2438 /* BPStatusBar */ = {
 			isa = PBXGroup;
 			children = (
+				72AA3B811774CFA8008A16A9 /* NSTimer+Blocks.h */,
+				72AA3B821774CFA8008A16A9 /* NSTimer+Blocks.m */,
 				D342334D1713D1B3000B2438 /* BPStatusBar.bundle */,
 				D342334E1713D1B3000B2438 /* BPStatusBar.h */,
 				D342334F1713D1B3000B2438 /* BPStatusBar.m */,
@@ -196,6 +201,7 @@
 				D3E0400F1713D19100571D05 /* BPAppDelegate.m in Sources */,
 				D34233511713D1B3000B2438 /* BPStatusBar.m in Sources */,
 				D34233551713D1DE000B2438 /* BPDemoViewController.m in Sources */,
+				72AA3B831774CFA8008A16A9 /* NSTimer+Blocks.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

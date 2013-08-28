@@ -16,6 +16,9 @@
 @property (readwrite, nonatomic, retain) UIFont *font NS_AVAILABLE_IOS(5_0) UI_APPEARANCE_SELECTOR;
 #endif
 
+#define kDeviceWidth [UIScreen mainScreen].bounds.size.width
+#define kDeviceHeight [UIScreen mainScreen].bounds.size.height
+
 /**
  * Access the animation used to transition to/from the system status bar.
  * @default UIStatusBarAnimationFade
@@ -57,6 +60,8 @@
  * Dismiss the BPStatusBar and restore the system status bar.
  */
 + (void)dismiss;
+
++ (void)dismissNotice;
 
 /**
  * Indicates whether the BPStatusBar is visible.

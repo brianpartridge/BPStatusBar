@@ -23,7 +23,7 @@ A utility class for displaying status updates in the iOS status bar.  Inspired b
 
 - Show a message with a success image and dismiss after 1 second
 
-        [BPStatusBar showWithSuccess:@"Download Finished!"];
+        [BPStatusBar showSuccessWithStatus:@"Download Finished!"];
         
 - See the included demo app for more.
 

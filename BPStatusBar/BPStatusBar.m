@@ -31,10 +31,10 @@ typedef NS_ENUM(NSInteger, BPStatusBarAccessoryType) {
     CGRect bounds = CGRectMake(0, 0, self.size.width, self.size.height);
     UIRectFill(bounds);
     [self drawInRect:bounds blendMode:kCGBlendModeDestinationIn alpha:1.0f];
-
+    
     UIImage *tintedImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-
+    
     return tintedImage;
 }
 
@@ -58,7 +58,7 @@ typedef NS_ENUM(NSInteger, BPStatusBarAccessoryType) {
 static UIStatusBarAnimation _transitionStyle;
 
 + (void)initialize {
-    _transitionStyle = UIStatusBarAnimationFade;
+    _transitionStyle = UIStatusBarAnimationSlide;
 }
 
 #pragma mark - Class Property
@@ -77,9 +77,12 @@ static UIStatusBarAnimation _transitionStyle;
     static BPStatusBar *sharedView;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
+        sharedView = [[BPStatusBar alloc] init];
         UIApplication *app = [UIApplication sharedApplication];
-        sharedView = [[BPStatusBar alloc] initWithFrame:CGRectMake(0, 0, app.statusBarFrame.size.width, app.statusBarFrame.size.height)];
+        sharedView.frame = CGRectMake(0, 0, app.statusBarFrame.size.width, app.statusBarFrame.size.height);
     });
+    sharedView.clipsToBounds = YES;
+
     return sharedView;
 }
 
@@ -113,6 +116,10 @@ static UIStatusBarAnimation _transitionStyle;
     [[self sharedView] dismiss:[self transitionStyle]];
 }
 
++ (void)dismissNotice {
+    [[self sharedView] dismissView];
+}
+
 + (BOOL)isVisible {
     return ([UIApplication sharedApplication].statusBarHidden &&
             [self sharedView].superview != nil);
@@ -122,46 +129,113 @@ static UIStatusBarAnimation _transitionStyle;
 
 - (id)initWithFrame:(CGRect)frame {
 	self = [super initWithFrame:frame];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(orientationChanged:)
+                                                 name:UIDeviceOrientationDidChangeNotification
+                                               object:nil];
 	if (!self) {
         return nil;
 	}
-
+    
     self.userInteractionEnabled = NO;
     self.backgroundColor = [UIColor blackColor];
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-
+    
 	return self;
 }
 
-- (void)layoutSubviews {
-    if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
-        self.statusLabel.frame = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
-    } else {
-        [self layoutWithAccessory];
+- (void) orientationChanged:(NSNotification *) notification {
+    //NSLog(@"Orientation Changed");
+    // TODO: Make the view animate rotation with the rest of the views
+    // TODO: This is a timing hack, it would be nice if we could get notified when the system status bar fully appears, but we can't currently.
+    CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
+    availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
+    
+    CGRect barViewFrame = self.frame;
+
+    if (UIInterfaceOrientationIsLandscape(self.orientation)){
+      barViewFrame.origin.y -= availableBounds.size.height;
+    }else{
+      barViewFrame.origin.x -= availableBounds.size.height;
     }
+
+    [UIView animateWithDuration:0.3 animations:^{
+        self.frame = barViewFrame;
+    } completion:^(BOOL finished){
+        // [self removeFromSuperview];
+    }];
+}
+
+- (void)layoutSubviews {
+    float delay = 0;
+    if (self.statusLabel.frame.origin.y == 1) {
+        [self dismissView];
+        delay = 0.3;
+    }
+
+//    [NSTimer timerWithTimeInterval:delay block:^{
+//        NSLog(@"Ran timer");
+//        [self layoutWithAccessory];
+//    } repeats:NO];
+    [self layoutWithAccessory];
+
+
+//    [NSTimer timerWithTimeInterval:delay block:^{
+//        [self layoutWithAccessory];
+//    } repeats:NO];
+
+//    [self performSelector:@selector(layoutWithAccessory) withObject:nil afterDelay:delay];
+//    [self layoutWithAccessory];
+//    [self layoutWithAccessoryAndDelay:delay];
 }
 
 - (void)layoutWithAccessory {
     CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
     availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
-
+    
     CGSize labelSize = [self.statusLabel sizeThatFits:availableBounds.size];
     if (availableBounds.size.width < labelSize.width) {
         labelSize = availableBounds.size;
     }
-
+    
     CGFloat totalContentWidth = ACCESSORY_DIMENSION + HORIZONTAL_PADDING + labelSize.width;
     CGFloat hOffset = floorf((self.bounds.size.width - totalContentWidth) / 2);
     CGRect accessoryFrame = CGRectMake(hOffset,
                                        floorf((self.bounds.size.height - ACCESSORY_DIMENSION) / 2),
                                        ACCESSORY_DIMENSION,
                                        ACCESSORY_DIMENSION);
+    accessoryFrame.origin.y = availableBounds.size.height;
     self.imageView.frame = self.spinner.frame = accessoryFrame;
 
-    self.statusLabel.frame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
-                                        floorf((self.bounds.size.height - labelSize.height) / 2),
-                                        labelSize.width,
-                                        labelSize.height);
+    CGRect statusLabelFrame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
+                                         floorf((self.bounds.size.height - labelSize.height) / 2),
+                                         labelSize.width,
+                                         labelSize.height);
+    statusLabelFrame.origin.y = availableBounds.size.height;
+    if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
+        statusLabelFrame.origin.x -= accessoryFrame.size.width;
+    }
+    self.statusLabel.frame = statusLabelFrame;
+    
+    [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionAllowUserInteraction animations:^{
+        CGRect accessoryFrame = CGRectMake(hOffset,
+                                           floorf((self.bounds.size.height - ACCESSORY_DIMENSION) / 2),
+                                           ACCESSORY_DIMENSION,
+                                           ACCESSORY_DIMENSION);
+        CGRect statusLabelFrame = CGRectMake(CGRectGetMaxX(accessoryFrame) + HORIZONTAL_PADDING,
+                                             floorf((self.bounds.size.height - labelSize.height) / 2),
+                                             labelSize.width,
+                                             labelSize.height);
+
+        if (self.accessoryType == BPStatusBarAccessoryTypeNone) {
+            statusLabelFrame.origin.x -= accessoryFrame.size.width;
+        }
+
+        self.imageView.frame = accessoryFrame;
+        self.statusLabel.frame = statusLabelFrame;
+        self.spinner.frame = accessoryFrame;
+    } completion:^(BOOL completed){
+    }];
 }
 
 - (void)setStatus:(NSString *)status {
@@ -173,7 +247,7 @@ static UIStatusBarAnimation _transitionStyle;
 
 - (void)setAccessoryType:(BPStatusBarAccessoryType)accessoryType {
     _accessoryType = accessoryType;
-
+    
     switch (accessoryType) {
         case BPStatusBarAccessoryTypeNone:
             self.imageView.image = nil;
@@ -198,24 +272,25 @@ static UIStatusBarAnimation _transitionStyle;
 
 - (void)showStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
     [self.autoDismissalTimer invalidate];
-
+    
     self.accessoryType = BPStatusBarAccessoryTypeNone;
     self.statusLabel.text = status;
-
+    
     if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
     }
-    [self setNeedsLayout];
+//    [self setNeedsLayout];
 }
 
 - (void)showActivityWithStatus:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
+    self.transform = [self transform];
     [self.autoDismissalTimer invalidate];
-
+    
     self.accessoryType = BPStatusBarAccessoryTypeIndeterminate;
     self.statusLabel.text = status;
-
+    
     if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
         [[UIApplication sharedApplication].keyWindow addSubview:self];
@@ -225,34 +300,57 @@ static UIStatusBarAnimation _transitionStyle;
 }
 
 - (void)showImage:(UIImage *)image status:(NSString *)status transitionStyle:(UIStatusBarAnimation)transitionStyle {
+    self.transform = [self transform];
     [self.autoDismissalTimer invalidate];
-
+    
     self.accessoryType = BPStatusBarAccessoryTypeImage;
     self.imageView.image = [image bpsb_tintedImageWithColor:self.foregroundColor];
     self.statusLabel.text = status;
-
+    
     if (![UIApplication sharedApplication].statusBarHidden) {
         self.frame = [UIApplication sharedApplication].statusBarFrame;
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
     }
     [self setNeedsLayout];
-
-    self.autoDismissalTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(dismissFromTimer:) userInfo:nil repeats:NO];
+    
+    self.autoDismissalTimer = [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(dismissFromTimer:) userInfo:nil repeats:NO];
 }
 
 - (void)dismiss:(UIStatusBarAnimation)transitionStyle {
     if (![UIApplication sharedApplication].statusBarHidden) {
         return;
     }
+    
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:transitionStyle];
 
+    [self dismissView];
+}
+
+-(void)dismissView{
     // TODO: This is a timing hack, it would be nice if we could get notified when the system status bar fully appears, but we can't currently.
-    double delayInSeconds = STATUSBAR_TRANSITION_DURATION;
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        [self removeFromSuperview];
-    });
+    CGRect availableBounds = CGRectInset(self.bounds, HORIZONTAL_PADDING, 0);
+    availableBounds.size.width -= (ACCESSORY_DIMENSION + HORIZONTAL_PADDING);
+    
+    CGRect barViewFrame = self.frame;
+    CGRect imageViewFrame = self.imageView.frame;
+    CGRect statusLabelFrame = self.statusLabel.frame;
+    CGRect spinnerFrame = self.spinner.frame;
+
+    barViewFrame.origin.y -= availableBounds.size.height;
+    imageViewFrame.origin.y += availableBounds.size.height;
+    statusLabelFrame.origin.y += availableBounds.size.height;
+    spinnerFrame.origin.y += availableBounds.size.height;
+
+    // [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:transitionStyle];
+    [UIView animateWithDuration:0.3 animations:^{
+        // self.frame = barViewFrame;
+        self.imageView.frame = imageViewFrame;
+        self.statusLabel.frame = statusLabelFrame;
+        self.spinner.frame = spinnerFrame;
+    } completion:^(BOOL finished){
+        // [self removeFromSuperview];
+    }];
 }
 
 - (void)dismissFromTimer:(NSTimer *)timer {
@@ -272,16 +370,16 @@ static UIStatusBarAnimation _transitionStyle;
         _statusLabel.textAlignment = NSTextAlignmentCenter;
 #endif
 		_statusLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-
+        
         // UIAppearance is used when iOS >= 5.0
 		_statusLabel.textColor = self.foregroundColor;
 		_statusLabel.font = self.font;
     }
-
+    
     if (_statusLabel.superview == nil) {
         [self addSubview:_statusLabel];
     }
-
+    
     return _statusLabel;
 }
 
@@ -289,11 +387,11 @@ static UIStatusBarAnimation _transitionStyle;
     if (_imageView == nil) {
         _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, ACCESSORY_DIMENSION, ACCESSORY_DIMENSION)];
     }
-
+    
     if(_imageView.superview == nil) {
         [self addSubview:_imageView];
     }
-
+    
     return _imageView;
 }
 
@@ -301,18 +399,18 @@ static UIStatusBarAnimation _transitionStyle;
     if (_spinner == nil) {
         _spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
 		_spinner.hidesWhenStopped = YES;
-
+        
         CGFloat scale = ACCESSORY_DIMENSION / _spinner.bounds.size.width;
         _spinner.transform = CGAffineTransformMakeScale(scale, scale);
-
+        
         // UIAppearance is used when iOS >= 5.0
         _spinner.color = self.foregroundColor;
     }
-
+    
     if(_spinner.superview == nil) {
         [self addSubview:_spinner];
     }
-
+    
     return _spinner;
 }
 
@@ -323,12 +421,12 @@ static UIStatusBarAnimation _transitionStyle;
     if (_foregroundColor == nil) {
         _foregroundColor = [[[self class] appearance] foregroundColor];
     }
-
+    
     if (_foregroundColor != nil) {
         return _foregroundColor;
     }
 #endif
-
+    
     return [UIColor colorWithWhite:186.0/255.0 alpha:1.0];
 }
 
@@ -337,13 +435,53 @@ static UIStatusBarAnimation _transitionStyle;
     if (_font == nil) {
         _font = [[[self class] appearance] font];
     }
-
+    
     if (_font != nil) {
         return _font;
     }
 #endif
-
+    
     return [UIFont boldSystemFontOfSize:14];
+}
+
+-(UIDeviceOrientation)orientation{
+    // 1. Return current interface orientation
+    return [[UIDevice currentDevice] orientation];
+}
+
+- (CGAffineTransform)transform{
+    // 1. Find the correct transform
+    CGAffineTransform t = CGAffineTransformMakeRotation(0.0);
+    if (self.orientation == UIDeviceOrientationLandscapeLeft){
+        t = CGAffineTransformMakeRotation(M_PI / 2.0);
+    }else if (self.orientation == UIDeviceOrientationLandscapeRight){
+        t = CGAffineTransformMakeRotation(M_PI / -2.0);
+    }else if (self.orientation == UIDeviceOrientationPortrait){
+        t = CGAffineTransformMakeRotation(0.0);
+    }
+    
+    // 2. Return the transform
+    return t;
+}
+
+-(int)screenHeight{
+    // 1. Set heigt in relation to screens position
+    int height = kDeviceHeight;
+    if (UIInterfaceOrientationIsLandscape(self.orientation))
+        height = kDeviceWidth;
+    
+    // 2. Return height
+    return height;
+}
+
+-(int)screenWidth{
+    // 1. Set width in relation to screens position
+    int width = kDeviceWidth;
+    if (UIInterfaceOrientationIsLandscape(self.orientation))
+        width = kDeviceHeight;
+    
+    // 2. Return width
+    return width;
 }
 
 @end

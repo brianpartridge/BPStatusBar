@@ -8,6 +8,6 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/brianpartridge/BPStatusBar.git", :tag => "0.9.0" }
   s.platform     = :ios, '5.0'
   s.source_files = 'BPStatusBar', 'BPStatusBar/**/*.{h,m}'
-  s.resources = "BPStatusBar/BPStatusBar.bundle/*.png"
+  s.resources 	 = 'BPStatusBar/BPStatusBar.bundle'
   s.requires_arc = true
 end
